@@ -11,14 +11,20 @@
     (when (.exists (io/as-file ^string file-path))
       (into {}
             (comp
-             (mapcat
-              (fn [line]
-                (let [[name ean stock price] (str/split line #";")]
-                  (when (not-empty ean)
-                    {ean {:ean   ean
-                          :name  (str/lower-case name)
-                          :stock (Double/parseDouble stock)
-                          :price (Double/parseDouble price)}}))))
+             (map #(str/split % #";"))
+             (map (fn [{name               0
+                        ean                1
+                        stock              2
+                        purchase-net-price 3
+                        sell-net-price-1   4
+                        sell-net-price-2   5}]
+                    (when (not-empty ean)
+                      {ean {:product/ean                  ean
+                            :product/name                 (str/lower-case name)
+                            :stock/qty                    (Double/parseDouble stock)
+                            :warehouse/purchase-net-price (Double/parseDouble purchase-net-price)
+                            :warehouse/sell-net-price-1 (Double/parseDouble sell-net-price-1)
+                            :warehouse/sell-net-price-2 (Double/parseDouble sell-net-price-2)}})))
              (filter identity))
             (xio/lines-in (io/reader file-path))))))
 
