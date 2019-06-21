@@ -4,8 +4,8 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [taoensso.encore :as e]
-   [net.cgrand.xforms :as x]
-   [net.cgrand.xforms.io :as xio]))
+   [ribelo.wombat.io :as wio]
+   [net.cgrand.xforms :as x]))
 
 (defn translate-warehouse [s]
   (case s
@@ -34,39 +34,35 @@
       "F.Kor.S" :delivery
       "PZ/OCZ." :delivery
       "Ro.Wewn" :dispatch
-      "Zak.Kor" :dispatch)
+      "Zak.Kor" :dispatch
+      "KasyFis" :dispatch)
     (catch Exception e
       (throw (ex-info s {:s s})))))
 
 (defn read-file [file-path]
-  (when (.exists (io/as-file file-path))
-    (into []
-          (comp (map #(str/split % #";"))
-                (map (fn [{warehouse          0
-                           name               2
-                           ean                3
-                           contractor         6
-                           doc-id             7
-                           date               8
-                           purchase-net-price 9
-                           sell-net-price     10
-                           qty                11
-                           purchase-net-value 12
-                           doc-type           18}]
-                       (let [doc-type' (translate-doc-type doc-type)]
-                         {:market-id          (translate-warehouse warehouse)
-                          :product-name       (str/lower-case name)
-                          :ean                ean
-                          :contractor         (translate-contractor contractor)
-                          :doc-id             (str/lower-case doc-id)
-                          :date               (jt/local-date "yy.MM.dd" date)
-                          :purchase-net-price (Double/parseDouble purchase-net-price)
-                          :sell-net-price     (Double/parseDouble sell-net-price)
-                          :qty                (Double/parseDouble qty)
-                          :purchase-net-value (Double/parseDouble purchase-net-value)
-                          :doc-type           doc-type'}))))
-          (xio/lines-in (io/reader file-path)))))
-
+  (wio/read-csv file-path
+                {:sep    ";"
+                 :header {:market/id                   0
+                          :product/name                2
+                          :product/ean                 3
+                          :rotation/contractor         6
+                          :rotation/document-id        7
+                          :rotation/date               8
+                          :rotation/purchase-net-price 9
+                          :rotation/sell-net-price     10
+                          :rotation/qty                11
+                          :rotation/purchase/net-vale  12
+                          :rotation/document-type      18}
+                 :parse  {:market/id                   translate-warehouse
+                          :product/name                str/lower-case
+                          :rotation/contractor         translate-contractor
+                          :rotation/document-id        str/lower-case
+                          :rotation/date               #(jt/local-date "yy.MM.dd" %)
+                          :rotation/purchase-net-price e/as-?float
+                          :rotation/sell-net-price     e/as-?float
+                          :rotation/qty                e/as-?float
+                          :rotation/purchase/net-vale  e/as-?float
+                          :rotation/document-type      translate-doc-type}}))
 
 (defn read-files [{:keys [begin-date end-date data-path]}]
   (let [begin-date (cond-> begin-date (not (instance? java.time.LocalDate begin-date)) (jt/local-date))
@@ -84,4 +80,7 @@
                   (mapcat read-file))))))
 
 (defn filter-contractor [name]
-  (filter (fn [{:keys [contractor]}] (= contractor name))))
+  (filter (fn [{:keys [rotation/contractor]}] (= contractor name))))
+
+(defn filter-market-id [s]
+  (filter (fn [{:keys [market/id]}] (= id s))))

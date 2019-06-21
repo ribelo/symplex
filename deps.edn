@@ -1,6 +1,8 @@
-{:paths   ["resources" "src"]
- :deps    {org.clojure/clojure    {:mvn/version "1.10.0"}
-           org.clojure/tools.cli  {:mvn/version "0.4.2"}
-           com.taoensso/encore    {:mvn/version "2.111.0"}
-           net.cgrand/xforms      {:mvn/version "0.19.0"}
-           clojure.java-time      {:mvn/version "0.3.2"}}}
+{:paths ["resources" "src"]
+ :deps  {org.clojure/clojure   {:mvn/version "1.10.0"}
+         org.clojure/tools.cli {:mvn/version "0.4.2"}
+         com.taoensso/encore   {:mvn/version "2.111.0"}
+         net.cgrand/xforms     {:mvn/version "0.19.0"}
+         clojure.java-time     {:mvn/version "0.3.2"}
+         ribelo/wombat         {:git/url "https://github.com/ribelo/wombat"
+                                :sha     "3930addff9eea102b3aebefd5312044081ebbeb3"}}}

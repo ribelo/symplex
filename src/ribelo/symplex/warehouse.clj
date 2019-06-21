@@ -2,31 +2,27 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [net.cgrand.xforms.io :as xio]
+   [net.cgrand.xforms :as x]
+   [ribelo.wombat.io :as wio]
    [taoensso.encore :as e]))
 
-(defn read-file [{:keys [data-path file-name]
-                  :or   {file-name "mag.csv"}}]
-  (let [file-path (e/path data-path file-name)]
-    (when (.exists (io/as-file ^string file-path))
-      (into {}
-            (comp
-             (map #(str/split % #";"))
-             (map (fn [{name               0
-                        ean                1
-                        stock              2
-                        purchase-net-price 3
-                        sell-net-price-1   4
-                        sell-net-price-2   5}]
-                    (when (not-empty ean)
-                      {ean {:product/ean                  ean
-                            :product/name                 (str/lower-case name)
-                            :stock/qty                    (Double/parseDouble stock)
-                            :warehouse/purchase-net-price (Double/parseDouble purchase-net-price)
-                            :warehouse/sell-net-price-1 (Double/parseDouble sell-net-price-1)
-                            :warehouse/sell-net-price-2 (Double/parseDouble sell-net-price-2)}})))
-             (filter identity))
-            (xio/lines-in (io/reader file-path))))))
+(defn read-file [file-path]
+  (->> (wio/read-csv file-path
+                     {:sep    ";"
+                      :header {:product/name                 0
+                               :product/ean                  1
+                               :warehouse/stock              2
+                               :warehouse/purchase-net-price 3
+                               :warehouse/sell-net-price-1   4
+                               :warehouse/sell-net-price-2   5}
+                      :parse      {:product/name                 str/lower-case
+                                   :warehouse/stock              e/as-?float
+                                   :warehouse/purchase-net-price e/as-?float
+                                   :warehouse/sell-net-price-1   e/as-?float
+                                   :warehouse/sell-net-price-2   e/as-?float}})
+       (into {} (comp
+                 (filter (fn [{:keys [product/ean]}] (seq ean)))
+                 (x/by-key :product/ean (x/into []))))))
 
 (defn add-orders [orders warehouse]
   (reduce

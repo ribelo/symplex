@@ -2,30 +2,28 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [taoensso.encore :as e]
+   [java-time :as jt]
    [net.cgrand.xforms :as x]
-   [net.cgrand.xforms.io :as xio]
-   [java-time :as jt]))
+   [ribelo.wombat.io :as wio]
+   [taoensso.encore :as e]))
 
 (defn read-file [file-path]
-  (when (.exists (io/as-file ^string file-path))
-    (into []
-          (comp (map #(str/split % #";"))
-                (map (fn [{name        1
-                           ean         2
-                           vendor      7
-                           date        12
-                           net-price   13
-                           gross-price 14
-                           qty         15}]
-                       {:name        (str/lower-case name)
-                        :ean         ean
-                        :vendor      (str/lower-case vendor)
-                        :date        (jt/local-date "yy.MM.dd" date)
-                        :net-price   (Double/parseDouble net-price)
-                        :gross-price (Double/parseDouble gross-price)
-                        :qty         (Double/parseDouble qty)})))
-          (xio/lines-in (io/reader file-path)))))
+  (wio/read-csv file-path
+                {:sep    ";"
+                 :header {:product/name         1
+                          :product/ean          2
+                          :purchase/vendor      7
+                          :purchase/date        12
+                          :purchase/net-price   13
+                          :purchase/gross-price 14
+                          :purchase/qty         15}
+                 :parse  {:product/name         str/lower-case
+                          :purchase/vendor      str/lower-case
+                          :purchase/date        #(jt/local-date "yy.MM.dd" %)
+                          :purchase/net-price   e/as-?float
+                          :purchase/gross-price e/as-?float
+                          :purchase/qty         e/as-?float}}))
+
 
 (defn read-files [{:keys [begin-date end-date data-path]}]
   (let [begin-date (cond-> begin-date (not (instance? java.time.LocalDate begin-date)) (jt/local-date))
@@ -47,7 +45,3 @@
        (x/into {}
                (comp (filter (fn [{:keys [ean]}] (not-empty ean)))
                      (x/by-key :vendor (comp (map :ean) (x/into #{})))))))
-
-(read-files {:begin-date "2019-01-01"
-             :end-date   "2019-01-05"
-             :data-path  "/home/ribelo/sync/schowek/teas/dane"})
