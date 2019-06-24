@@ -43,5 +43,5 @@
 (defn eans-by-vendor [coll]
   (->> coll
        (x/into {}
-               (comp (filter (fn [{:keys [ean]}] (not-empty ean)))
-                     (x/by-key :vendor (comp (map :ean) (x/into #{})))))))
+               (comp (filter (fn [{:keys [product/ean]}] (not-empty ean)))
+                     (x/by-key :vendor (comp (map :product/ean) (x/into #{})))))))

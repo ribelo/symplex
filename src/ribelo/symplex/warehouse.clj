@@ -34,7 +34,7 @@
 (defn calculate-supply [warehouse sales]
   (->> warehouse
        (into {}
-             (comp (map (fn [[ean {:keys [^double stock ^double ordered]
+             (comp (map (fn [[ean {:keys [^double warehouse/stock ^double warehouse/ordered]
                                    :or {ordered 0.0}
                                    :as m}]]
                           {ean (let [mean (get-in sales [ean :mean] 0.0)
