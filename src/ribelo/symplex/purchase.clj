@@ -44,4 +44,4 @@
   (->> coll
        (x/into {}
                (comp (filter (fn [{:keys [product/ean]}] (not-empty ean)))
-                     (x/by-key :vendor (comp (map :product/ean) (x/into #{})))))))
+                     (x/by-key :purchase/vendor (comp (map :product/ean) (x/into #{})))))))
