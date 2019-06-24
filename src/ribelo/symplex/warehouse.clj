@@ -22,7 +22,7 @@
                                    :warehouse/sell-net-price-2   e/as-?float}})
        (into {} (comp
                  (filter (fn [{:keys [product/ean]}] (seq ean)))
-                 (x/by-key :product/ean (x/into []))))))
+                 (x/by-key :product/ean (x/into {}))))))
 
 (defn add-orders [orders warehouse]
   (reduce
