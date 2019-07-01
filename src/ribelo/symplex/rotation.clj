@@ -51,7 +51,7 @@
                           :rotation/purchase-net-price 9
                           :rotation/sell-net-price     10
                           :rotation/qty                11
-                          :rotation/purchase/net-vale  12
+                          :rotation/purchase-net-vale  12
                           :rotation/document-type      18}
                  :parse  {:market/id                   translate-warehouse
                           :product/name                str/lower-case
@@ -61,7 +61,7 @@
                           :rotation/purchase-net-price e/as-?float
                           :rotation/sell-net-price     e/as-?float
                           :rotation/qty                e/as-?float
-                          :rotation/purchase/net-vale  e/as-?float
+                          :rotation/purchase-net-vale  e/as-?float
                           :rotation/document-type      translate-doc-type}}))
 
 (defn read-files [{:keys [begin-date end-date data-path]}]
