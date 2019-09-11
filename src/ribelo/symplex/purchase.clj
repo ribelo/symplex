@@ -5,6 +5,7 @@
    [java-time :as jt]
    [net.cgrand.xforms :as x]
    [ribelo.wombat.io :as wio]
+   [ribelo.wombat :as wb :refer [=>> +>>]]
    [taoensso.encore :as e]))
 
 (defn read-file [file-path]
@@ -40,8 +41,11 @@
                   (filter #(.exists (io/as-file %)))
                   (mapcat read-file))))))
 
-(defn eans-by-vendor [coll]
-  (->> coll
-       (x/into {}
-               (comp (filter (fn [{:keys [product/ean]}] (not-empty ean)))
-                     (x/by-key :purchase/vendor (comp (map :product/ean) (x/into #{})))))))
+(defn eans-by-vendor
+  ([coll]
+   (+>> coll
+        (wb/where :product/ean not-empty)
+        (x/by-key :purchase/vendor (comp (map :product/ean) (x/into #{})))))
+  ([vendor coll]
+   (-> (eans-by-vendor (=>> coll (wb/where :purchase/vendor vendor)))
+       (get vendor))))
