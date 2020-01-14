@@ -40,37 +40,42 @@
     (catch Exception e
       (throw (ex-info s {:s s})))))
 
+(defn parse-date [s]
+  (cond (re-find #"^\d{4}\.\d{2}\.\d{2}$" s) (jt/local-date "yyyy.MM.dd" s)
+        (re-find #"^\d{2}\.\d{2}\.\d{2}$" s) (jt/local-date "yy.MM.dd" s)
+        :else                                (throw (ex-info "bad date format" {:date s}))))
+
 (defn read-file [file-path]
   (->> (wio/read-csv file-path
-                 {:sep    ";"
-                  :header {:market/id                   0
-                           :product/name                2
-                           :product/ean                 3
-                           :rotation/contractor         6
-                           :rotation/document-id        7
-                           :rotation/date               8
-                           :rotation/purchase-net-price 9
-                           :rotation/sell-net-price     10
-                           :rotation/qty                11
-                           :rotation/purchase-net-value 12
-                           :rotation/document-type      18}
-                  :parse  {:market/id                   translate-warehouse
-                           :product/name                str/lower-case
-                           :rotation/contractor         translate-contractor
-                           :rotation/document-id        str/lower-case
-                           :rotation/date               #(jt/local-date "yy.MM.dd" %)
-                           :rotation/purchase-net-price e/as-?float
-                           :rotation/sell-net-price     e/as-?float
-                           :rotation/qty                e/as-?float
-                           :rotation/purchase-net-value e/as-?float
-                           :rotation/document-type      translate-doc-type}})
-       (into []
-             (comp
-              (wb/set :rotation/sell-net-value
-                      (fn [^double x ^double y]
-                        (when (and (number? x) (number? y))
-                          (* x y)))
-                      [:rotation/sell-net-price :rotation/qty])))))
+                    {:sep    ";"
+                     :header {:market/id                   0
+                              :product/name                2
+                              :product/ean                 3
+                              :rotation/contractor         6
+                              :rotation/document-id        7
+                              :rotation/date               8
+                              :rotation/purchase-net-price 9
+                              :rotation/sell-net-price     10
+                              :rotation/qty                11
+                              :rotation/purchase-net-value 12
+                              :rotation/document-type      18}
+                     :parse  {:market/id                   translate-warehouse
+                              :product/name                str/lower-case
+                              :rotation/contractor         translate-contractor
+                              :rotation/document-id        str/lower-case
+                              :rotation/date               parse-date
+                              :rotation/purchase-net-price e/as-?float
+                              :rotation/sell-net-price     e/as-?float
+                              :rotation/qty                e/as-?float
+                              :rotation/purchase-net-value e/as-?float
+                              :rotation/document-type      translate-doc-type}})
+      (into []
+            (comp
+             (wb/set :rotation/sell-net-value
+                     (fn [^double x ^double y]
+                       (when (and (number? x) (number? y))
+                         (* x y)))
+                     [:rotation/sell-net-price :rotation/qty])))))
 
 
 (defn read-files [{:keys [begin-date end-date data-path]}]

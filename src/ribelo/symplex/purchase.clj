@@ -8,6 +8,11 @@
    [ribelo.wombat :as wb :refer [=>> +>>]]
    [taoensso.encore :as e]))
 
+(defn parse-date [s]
+  (cond (re-find #"^\d{4}\.\d{2}\.\d{2}$" s) (jt/local-date "yyyy.MM.dd" s)
+        (re-find #"^\d{2}\.\d{2}\.\d{2}$" s) (jt/local-date "yy.MM.dd" s)
+        :else                                (throw (ex-info "bad date format" {:date s}))))
+
 (defn read-file [file-path]
   (wio/read-csv file-path
                 {:sep    ";"
@@ -20,7 +25,7 @@
                           :purchase/qty         15}
                  :parse  {:product/name         str/lower-case
                           :purchase/vendor      str/lower-case
-                          :purchase/date        #(jt/local-date "yy.MM.dd" %)
+                          :purchase/date        parse-date
                           :purchase/net-price   e/as-?float
                           :purchase/gross-price e/as-?float
                           :purchase/qty         e/as-?float}}))
