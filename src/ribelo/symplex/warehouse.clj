@@ -31,8 +31,6 @@
                  (filter (fn [{:keys [product/ean]}] (seq ean)))
                  (x/by-key :product/ean (x/into {}))))))
 
-(read-file "/home/ribelo/sync/schowek/teas/dane/mag.csv")
-
 (defn add-orders [orders warehouse]
   (reduce
    (fn [acc [ean {:keys [^double qty]}]]
