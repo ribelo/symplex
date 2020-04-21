@@ -36,7 +36,8 @@
       "PZ/OCZ." :purchase/slip
       "Ro.Wewn" :movements/out
       "Zak.Kor" :purchase/correction
-      "KasyFis" :sales/receipt)
+      "KasyFis" :sales/receipt
+      "Inwent." :movements/invent)
     (catch Exception e
       (throw (ex-info s {:s s})))))
 
