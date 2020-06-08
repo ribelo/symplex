@@ -4,9 +4,10 @@
    [clojure.string :as str]
    [java-time :as jt]
    [net.cgrand.xforms :as x]
-   [ribelo.wombat.io :as wio]
-   [ribelo.wombat :as wb :refer [=>> +>>]]
-   [taoensso.encore :as e]))
+   [hanse.danzig :as d]
+   [hanse.danzig.io :as dio]
+   [taoensso.encore :as e]
+   [clojure.data.csv :as csv]))
 
 (defn parse-date [s]
   (cond (re-find #"^\d{4}\.\d{2}\.\d{2}$" s) (jt/local-date "yyyy.MM.dd" s)
@@ -14,22 +15,21 @@
         :else                                (throw (ex-info "bad date format" {:date s}))))
 
 (defn read-file [file-path]
-  (wio/read-csv file-path
+  (dio/read-csv file-path
                 {:sep    ";"
-                 :header {:product/name         1
-                          :product/ean          2
-                          :purchase/vendor      7
-                          :purchase/date        12
-                          :purchase/net-price   13
-                          :purchase/gross-price 14
-                          :purchase/qty         15}
-                 :parse  {:product/name         str/lower-case
-                          :purchase/vendor      str/lower-case
-                          :purchase/date        parse-date
-                          :purchase/net-price   e/as-?float
-                          :purchase/gross-price e/as-?float
-                          :purchase/qty         e/as-?float}}))
-
+                 :header {:cg.purchase.product/name        1
+                          :cg.purchase.product/ean         2
+                          :cg.purchase/vendor              7
+                          :cg.purchase/date                12
+                          :cg.purchase.product/net-price   13
+                          :cg.purchase.product/gross-price 14
+                          :cg.purchase/qty                 15}
+                 :parse  {:cg.purchase.product/name        str/lower-case
+                          :cg.purchase/vendor              str/lower-case
+                          :cg.purchase/date                parse-date
+                          :cg.purchase.product/net-price   e/as-?float
+                          :cg.purchase.product/gross-price e/as-?float
+                          :cg.purchase/qty                 e/as-?float}}))
 
 (defn read-files [{:keys [begin-date end-date data-path]}]
   (let [begin-date (cond-> begin-date (not (instance? java.time.LocalDate begin-date)) (jt/local-date))
@@ -45,12 +45,3 @@
                           file-path))
                   (filter #(.exists (io/as-file %)))
                   (mapcat read-file))))))
-
-(defn eans-by-vendor
-  ([coll]
-   (+>> coll
-        (wb/where :product/ean not-empty)
-        (x/by-key :purchase/vendor (comp (map :product/ean) (x/into #{})))))
-  ([vendor coll]
-   (-> (eans-by-vendor (=>> coll (wb/where :purchase/vendor vendor)))
-       (get vendor))))
