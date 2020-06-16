@@ -4,9 +4,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [taoensso.encore :as e]
-   [hanse.danzig :as d]
-   [hanse.danzig.io :as dio]
-   [net.cgrand.xforms :as x]))
+   [tech.ml.dataset :as ds]))
 
 (defn translate-warehouse [s]
   (case s
@@ -47,48 +45,49 @@
         :else                                (throw (ex-info "bad date format" {:date s}))))
 
 (defn read-file [file-path]
-  (->> (dio/read-csv file-path
-                     {:sep    ";"
-                      :header {:cg.rotation/warehouse                  0
-                               :cg.rotation.product/name               2
-                               :cg.rotation.product/ean                3
-                               :cg.rotation/contractor                 6
-                               :cg.rotation/document-id                7
-                               :cg.rotation/date                       8
-                               :cg.rotation.product/purchase-net-price 9
-                               :cg.rotation.product/sell-net-price     10
-                               :cg.rotation.product/qty                11
-                               :cg.rotation.product/purchase-net-value 12
-                               :cg.rotation/document-type              18}
-                      :parse  {:cg.warehouse/id                        translate-warehouse
-                               :cg.rotation.product/name               str/lower-case
-                               :cg.rotation/contractor                 translate-contractor
-                               :cg.rotation/document-id                str/lower-case
-                               :cg.rotation/date                       parse-date
-                               :cg.rotation.product/purchase-net-price e/as-?float
-                               :cg.rotation.product/sell-net-price     e/as-?float
-                               :cg.rotation.product/qty                e/as-?float
-                               :cg.rotation.product/purchase-net-value e/as-?float
-                               :cg.rotation/document-type              translate-doc-type}})
-       (into []
-             (comp
-              (map (fn [m]
-                     (e/if-lets [price (:cg.rotation.product/sell-net-price m)
-                                 qty   (:cg.rotation.product/qty m)]
-                       (assoc m :cg.rotation.product/sell-net-value (* ^double price ^double qty))
-                       m)))))))
+  (when (.exists (io/file file-path))
+    (let [data (->> (ds/->dataset file-path
+                                  {:separator        \;
+                                   :header-row?      false
+                                   :column-whitelist [0 2 3 6 7 8 9 10 11 12 18]
+                                   :key-fn           {0  :cg.rotation/warehouse
+                                                      1  :cg.rotation.product/name
+                                                      2  :cg.rotation.product/ean
+                                                      3  :cg.rotation/contractor
+                                                      4  :cg.rotation/document-id
+                                                      5  :cg.rotation/date
+                                                      6  :cg.rotation.product/purchase-net-price
+                                                      7  :cg.rotation.product/sell-net-price
+                                                      8  :cg.rotation.product/qty
+                                                      9  :cg.rotation.product/purchase-net-value
+                                                      10 :cg.rotation/document-type}
+                                   :parser-fn        {4 :string
+                                                      5 :string
+                                                      6 :float32
+                                                      7 :float32
+                                                      8 :float32
+                                                      9 :float32}})
+                    (ds/filter (fn [row] (identity (get row :cg.rotation.product/ean))))
+                    (ds/filter (fn [row] (identity (get row :cg.rotation/document-id)))))]
+      (-> data
+          (ds/update-column :cg.rotation/warehouse (fn [col] (map translate-warehouse col)))
+          (ds/update-column :cg.rotation.product/name (fn [col] (map str/lower-case col)))
+          (ds/update-column :cg.rotation/contractor (fn [col] (map translate-contractor col)))
+          (ds/update-column :cg.rotation/document-id (fn [col] (map str/lower-case col)))
+          (ds/update-column :cg.rotation/contractor (fn [col] (map str/lower-case col)))
+          (ds/update-column :cg.rotation/date (fn [col] (map parse-date col)))
+          (ds/update-column :cg.rotation/document-type (fn [col] (map translate-doc-type col)))))))
 
 (defn read-files [{:keys [begin-date end-date data-path]}]
   (let [begin-date (cond-> begin-date (not (instance? java.time.LocalDate begin-date)) (jt/local-date))
         end-date   (cond-> end-date (not (instance? java.time.LocalDate end-date)) (jt/local-date))
         dates      (take-while #(jt/before? % (jt/plus end-date (jt/months 1)))
                                (jt/iterate jt/plus begin-date (jt/months 1)))]
-    (->> dates
-         (into []
-                 (comp
-                  (map #(let [date-str  (jt/format "yyyy_MM" %)
-                              file-name (str "rotation_" date-str ".csv")
-                              file-path (e/path data-path file-name)]
-                          file-path))
-                  (filter #(.exists (io/as-file %)))
-                  (mapcat read-file))))))
+    (reduce
+     (fn [acc dt]
+       (let [date-str  (jt/format "yyyy_MM" dt)
+             file-name (str "rotation_" date-str ".csv")
+             data      (read-file (e/path data-path file-name))]
+         (if acc (ds/concat acc data) data)))
+     nil
+     dates)))
