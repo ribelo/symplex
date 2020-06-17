@@ -24,14 +24,15 @@
                                                       4 :cg.purchase.product/net-price
                                                       5 :cg.purchase.product/gross-price
                                                       6 :cg.purchase/qty}
-                                   :parser-fn        {3 :string
+                                   :parser-fn        {0 [:string str/lower-case]
+                                                      1 :string
+                                                      2 [:string str/lower-case]
+                                                      3 :string
                                                       4 :float32
                                                       5 :float32
                                                       6 :float32}})
                     (ds/filter (fn [row] (identity (get row :cg.purchase.product/ean)))))]
       (-> data
-          (ds/update-column :cg.purchase.product/name (fn [col] (map str/lower-case col)))
-          (ds/update-column :cg.purchase/vendor (fn [col] (map str/lower-case col)))
           (ds/update-column :cg.purchase/date (fn [col] (map parse-date col)))))))
 
 

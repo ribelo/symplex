@@ -10,21 +10,20 @@
     0.0))
 
 (defn read-file [file-path]
-  (let [data (->> (ds/->dataset file-path
-                                 {:separator   \;
-                                  :header-row? false
-                                  :key-fn      {0 :cg.warehouse.product/name
-                                                1 :cg.warehouse.product/ean
-                                                2 :cg.warehouse.product/stock
-                                                3 :cg.warehouse.product/purchase-net-price
-                                                4 :cg.warehouse.product/sell-net-price-1
-                                                5 :cg.warehouse.product/sell-net-price-2
-                                                6 :cg.warehouse.product/vat}
-                                  :parser-fn   {2 :float32
-                                                3 :float32
-                                                4 :float32
-                                                5 :float32}})
-                  (ds/filter (fn [row] (identity (get row :cg.warehouse.product/ean)))))]
-    (-> data
-        (ds/update-column :cg.warehouse.product/name (fn [col] (map str/lower-case col)))
-        (ds/update-column :cg.warehouse.product/vat (fn [col] (map vat-parse col))))))
+  (->> (ds/->dataset file-path
+                     {:separator   \;
+                      :header-row? false
+                      :key-fn      {0 :cg.warehouse.product/name
+                                    1 :cg.warehouse.product/ean
+                                    2 :cg.warehouse.product/stock
+                                    3 :cg.warehouse.product/purchase-net-price
+                                    4 :cg.warehouse.product/sell-net-price-1
+                                    5 :cg.warehouse.product/sell-net-price-2
+                                    6 :cg.warehouse.product/vat}
+                      :parser-fn   {1 [:string str/lower-case]
+                                    2 :float32
+                                    3 :float32
+                                    4 :float32
+                                    5 :float32
+                                    6 [:float32 vat-parse]}})
+       (ds/filter (fn [row] (identity (get row :cg.warehouse.product/ean))))))

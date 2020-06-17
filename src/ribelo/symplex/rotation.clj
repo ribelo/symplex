@@ -61,22 +61,21 @@
                                                       8  :cg.rotation.product/qty
                                                       9  :cg.rotation.product/purchase-net-value
                                                       10 :cg.rotation/document-type}
-                                   :parser-fn        {4 :string
-                                                      5 :string
-                                                      6 :float32
-                                                      7 :float32
-                                                      8 :float32
-                                                      9 :float32}})
+                                   :parser-fn        {0  [:string translate-warehouse]
+                                                      1  [:string str/lower-case]
+                                                      2  :string
+                                                      3  [:string translate-contractor]
+                                                      4  [:string str/lower-case]
+                                                      5  :string
+                                                      6  :float32
+                                                      7  :float32
+                                                      8  :float32
+                                                      9  :float32
+                                                      10 [:keyword translate-doc-type]}})
                     (ds/filter (fn [row] (identity (get row :cg.rotation.product/ean))))
                     (ds/filter (fn [row] (identity (get row :cg.rotation/document-id)))))]
       (-> data
-          (ds/update-column :cg.rotation/warehouse (fn [col] (map translate-warehouse col)))
-          (ds/update-column :cg.rotation.product/name (fn [col] (map str/lower-case col)))
-          (ds/update-column :cg.rotation/contractor (fn [col] (map translate-contractor col)))
-          (ds/update-column :cg.rotation/document-id (fn [col] (map str/lower-case col)))
-          (ds/update-column :cg.rotation/contractor (fn [col] (map str/lower-case col)))
-          (ds/update-column :cg.rotation/date (fn [col] (map parse-date col)))
-          (ds/update-column :cg.rotation/document-type (fn [col] (map translate-doc-type col)))))))
+          (ds/update-column :cg.rotation/date (fn [col] (map parse-date col)))))))
 
 (defn read-files [{:keys [begin-date end-date data-path]}]
   (let [begin-date (cond-> begin-date (not (instance? java.time.LocalDate begin-date)) (jt/local-date))
