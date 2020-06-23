@@ -28,4 +28,3 @@
                                     5 :float32
                                     6 [:float32 vat-parse]}})
        (ds/filter (fn [row] (identity (get row :cg.warehouse.product/ean))))))
-(read-file "/home/ribelo/Public/teas/dane/mag.csv")
