@@ -20,10 +20,12 @@
                                     4 :cg.warehouse.product/sell-net-price-1
                                     5 :cg.warehouse.product/sell-net-price-2
                                     6 :cg.warehouse.product/vat}
-                      :parser-fn   {1 [:string str/lower-case]
+                      :parser-fn   {0 [:string str/lower-case]
+                                    1 :string
                                     2 :float32
                                     3 :float32
                                     4 :float32
                                     5 :float32
                                     6 [:float32 vat-parse]}})
        (ds/filter (fn [row] (identity (get row :cg.warehouse.product/ean))))))
+(read-file "/home/ribelo/Public/teas/dane/mag.csv")
