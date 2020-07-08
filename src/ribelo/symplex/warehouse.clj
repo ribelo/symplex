@@ -19,12 +19,18 @@
                                     3 :cg.warehouse.product/purchase-net-price
                                     4 :cg.warehouse.product/sell-net-price-1
                                     5 :cg.warehouse.product/sell-net-price-2
-                                    6 :cg.warehouse.product/vat}
+                                    6 :cg.warehouse.product/vat
+                                    7 :cg.warehouse.product/group
+                                    8 :cg.warehouse.product/category
+                                    9 :cg.warehouse.product/address}
                       :parser-fn   {0 [:string str/lower-case]
                                     1 :string
                                     2 :float32
                                     3 :float32
                                     4 :float32
                                     5 :float32
-                                    6 [:float32 vat-parse]}})
+                                    6 [:float32 vat-parse]
+                                    7 :string
+                                    8 :string
+                                    9 :string}})
        (ds/filter (fn [row] (identity (get row :cg.warehouse.product/ean))))))
