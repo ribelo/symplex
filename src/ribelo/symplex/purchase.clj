@@ -4,38 +4,28 @@
    [clojure.java.io :as io]
    [java-time :as jt]
    [taoensso.encore :as e]
-   [tech.ml.dataset :as ds]))
+   [meander.epsilon :as m]
+   [hanse.danzig :as dz :refer [=>>]]
+   [hanse.danzig.io :as dz.io]))
 
 (defn parse-date [s]
-  (cond (re-find #"^\d{4}\.\d{2}\.\d{2}$" s) (jt/local-date "yyyy.MM.dd" s)
-        (re-find #"^\d{2}\.\d{2}\.\d{2}$" s) (jt/local-date "yy.MM.dd" s)
-        :else                                (throw (ex-info "bad date format" {:date s}))))
+  (m/match s
+    (m/re #"^\d{4}\.\d{2}\.\d{2}$") (jt/local-date "yyyy.MM.dd" s)
+    (m/re #"^\d{2}\.\d{2}\.\d{2}$") (jt/local-date "yy.MM.dd" s)
+    _                               (throw (ex-info "bad date format" {:date s}))))
 
 (defn read-file [file-path]
   (when (.exists (io/file file-path))
-    (let [data (->> (ds/->dataset file-path
-                                  {:separator        \;
-                                   :header-row?      false
-                                   :column-whitelist [1 2 7 12 13 14 15]
-                                   :key-fn           {0 :cg.purchase.product/name
-                                                      1 :cg.purchase.product/ean
-                                                      2 :cg.purchase/vendor
-                                                      3 :cg.purchase/date
-                                                      4 :cg.purchase.product/net-price
-                                                      5 :cg.purchase.product/gross-price
-                                                      6 :cg.purchase/qty}
-                                   :parser-fn        {0 [:string str/lower-case]
-                                                      1 :string
-                                                      2 [:string str/lower-case]
-                                                      3 :string
-                                                      4 :float32
-                                                      5 :float32
-                                                      6 :float32}})
-                    (ds/filter (fn [row] (identity (get row :cg.purchase.product/ean)))))]
-      (-> data
-          (ds/update-column :cg.purchase/date (fn [col] (map parse-date col)))))))
-
-
+    (=>> (dz.io/read-csv file-path
+                         {:sep    ";"
+                          :header {1  [:cg.purchase.product/name [str/lower-case str/trim]]
+                                   2  [:cg.purchase.product/ean :string]
+                                   7  [:cg.purchase/vendor str/lower-case]
+                                   12 [:cg.purchase/date parse-date]
+                                   13 [:cg.purchase.product/net-price :double]
+                                   14 [:cg.purchase.product/gross-price :double]
+                                   15 [:cg.purchase/qty :double]}})
+         (dz/drop :cg.purchase.product/ean empty?))))
 
 (defn read-files [{:keys [begin-date end-date data-path]}]
   (let [begin-date (cond-> begin-date (not (instance? java.time.LocalDate begin-date)) (jt/local-date))
@@ -47,6 +37,6 @@
        (let [date-str  (jt/format "yyyy_MM" dt)
              file-name (str "purchase_" date-str ".csv")
              data      (read-file (e/path data-path file-name))]
-         (if acc (ds/concat acc data) data)))
+         (if acc (into acc data) data)))
      nil
      dates)))
