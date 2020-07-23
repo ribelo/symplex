@@ -3,4 +3,4 @@
          clojure.java-time   {:mvn/version "0.3.2"}
          meander/epsilon     {:mvn/version "0.0.421"}
          hanse/danzig {:git/url "https://github.com/ribelo/danzig"
-                       :sha     "e9f0f448a7b47fe631f91e130441e6a3e07d7766"}}}
+                       :sha     "e1b945fa25170e2d63d9ceab81af1cdd8718fb30"}}}

@@ -18,7 +18,7 @@
   (when (.exists (io/file file-path))
     (=>> (dz.io/read-csv file-path
                          {:sep    ";"
-                          :header {1  [:cg.purchase.product/name [str/lower-case str/trim]]
+                          :header {1  [:cg.purchase.product/name str/lower-case str/trim]
                                    2  [:cg.purchase.product/ean :string]
                                    7  [:cg.purchase/vendor str/lower-case]
                                    12 [:cg.purchase/date parse-date]

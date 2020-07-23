@@ -13,7 +13,7 @@
 (defn read-file [file-path]
   (=>> (dz.io/read-csv file-path
                        {:sep    ";"
-                        :header {0 [:cg.warehouse.product/name [:string str/lower-case]]
+                        :header {0 [:cg.warehouse.product/name :string str/lower-case]
                                  1 [:cg.warehouse.product/ean :string]
                                  2 [:cg.warehouse.product/stock :double]
                                  3 [:cg.warehouse.product/purchase-net-price :double]
