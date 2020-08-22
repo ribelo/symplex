@@ -21,6 +21,7 @@
                           :header {1  [:cg.purchase.product/name str/lower-case str/trim]
                                    2  [:cg.purchase.product/ean :string]
                                    7  [:cg.purchase/vendor str/lower-case]
+                                   11 [:cg.purchase/document-id str/lower-case]
                                    12 [:cg.purchase/date parse-date]
                                    13 [:cg.purchase.product/net-price :double]
                                    14 [:cg.purchase.product/gross-price :double]
@@ -33,10 +34,10 @@
         dates      (take-while #(jt/before? % (jt/plus end-date (jt/months 1)))
                                (jt/iterate jt/plus begin-date (jt/months 1)))]
     (reduce
-     (fn [acc dt]
-       (let [date-str  (jt/format "yyyy_MM" dt)
-             file-name (str "purchase_" date-str ".csv")
-             data      (read-file (e/path data-path file-name))]
-         (if acc (into acc data) data)))
-     nil
-     dates)))
+      (fn [acc dt]
+        (let [date-str  (jt/format "yyyy_MM" dt)
+              file-name (str "purchase_" date-str ".csv")
+              data      (read-file (e/path data-path file-name))]
+          (if acc (into acc data) data)))
+      nil
+      dates)))

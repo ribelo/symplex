@@ -1,6 +1,6 @@
 {:paths ["resources" "src"]
- :deps  {com.taoensso/encore {:mvn/version "2.120.0"}
+ :deps  {com.taoensso/encore {:mvn/version "2.122.0"}
          clojure.java-time   {:mvn/version "0.3.2"}
-         meander/epsilon     {:mvn/version "0.0.421"}
+         meander/epsilon     {:mvn/version "0.0.480"}
          hanse/danzig {:git/url "https://github.com/ribelo/danzig"
-                       :sha     "e1b945fa25170e2d63d9ceab81af1cdd8718fb30"}}}
+                       :sha     "57f28fbe219e72c345837146ff68d34a6982307c"}}}
